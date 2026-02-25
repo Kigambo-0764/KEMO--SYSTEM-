@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOMO AGENT RECORDS</title>
+<style>
+body { font-family: Arial, sans-serif; background-color: #e9ecef; margin:0; padding:10px; }
+.container { max-width:1000px; margin:auto; }
+header { text-align:center; background:#3498db; color:white; padding:15px 0; border-radius:10px; margin-bottom:20px; }
+header h1 { margin:0; font-size:24px; }
+header img { max-height:50px; vertical-align:middle; margin-right:10px; }
+
+.section { background:white; padding:15px; border-radius:10px; box-shadow:0 0 10px #ccc; margin-bottom:20px; }
+h2 { margin-top:0; color:#2c3e50; }
+input, button, select { padding:6px; margin:3px 0; }
+button { cursor:pointer; background:#3498db; color:white; border:none; border-radius:5px; transition:0.2s; }
+button:hover { background:#2980b9; }
+.table-container { max-height:250px; overflow-y:auto; border:1px solid #ccc; border-radius:5px; margin-top:10px; }
+table { width:100%; border-collapse:collapse; }
+th, td { border:1px solid #ccc; padding:6px; text-align:left; }
+th { background-color:#3498db; color:white; }
+#status { font-weight:bold; margin-top:5px; color:green; }
+
+/* Forms */
+.customer-form, .trans-form { display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+.customer-form input, .trans-form input { flex:1 1 120px; }
+.trans-buttons { display:flex; gap:5px; }
+
+.instructions { background:#f1f1f1; padding:10px; border-radius:5px; margin-bottom:10px; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        
+        <!-- KEMO Logo SVG -->
+<div style="text-align:center; margin:20px 0;">
+<svg width="300" height="120" viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="50" fill="red" />
+  <!-- Letter K -->
+  <text x="50" y="75" font-family="Arial, sans-serif" font-size="60" fill="white" font-weight="bold">K</text>
+  
+  <!-- Letters E M O -->
+  <text x="120" y="75" font-family="Arial, sans-serif" font-size="50" fill="magenta" font-weight="bold">EMO</text>
+  
+  <!-- Mobile phone icon -->
+  <rect x="240" y="30" width="30" height="60" rx="5" ry="5" fill="#3498db" stroke="black" stroke-width="3"/>
+  <circle cx="255" cy="80" r="3" fill="white"/>
+  
+  <!-- Tagline -->
+  <text x="150" y="110" font-family="Arial, sans-serif" font-size="14" fill="#2c3e50" text-anchor="middle">
+    Empowering Mobile Money Agents
+  </text>
+</svg>
+</div>
+        
+        
+        
+        <h1>KNOWLEDGE-ENABLED MOBILE OPERATIONS</h1>
+            <h2 align="center">(KEMO)</h2>
+        <h1>MOMO AGENT RECORDS</h1>
+    </header>
+
+    <div class="instructions">
+        <strong>Instructions for Agents:</strong>
+        <ol>
+            <li>Add your customer by entering name and phone.</li>
+            <li>Record transactions by selecting deposit or withdrawal.</li>
+            <li>View daily, monthly, or annual reports.</li>
+            <li>Export transactions to CSV for backup.</li>
+        </ol>
+    </div>
+
+    <!-- Customers Section -->
+    <div class="section">
+        <h2>Add Customer</h2>
+        <div class="customer-form">
+            <input type="text" id="custName" placeholder="Name">
+            <input type="text" id="custPhone" placeholder="Phone (Account ID)">
+            <button onclick="addCustomer()">Add Customer</button>
+        </div>
+
+        <h2>Customer List</h2>
+        <div class="table-container">
+            <table id="customerTable">
+                <tr><th>Name</th><th>Phone</th></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Transactions Section -->
+    <div class="section">
+        <h2>Transactions</h2>
+        <div class="trans-form">
+            <input type="text" id="transPhone" placeholder="Customer Phone" oninput="autoFillCustomer()">
+            <input type="text" id="transName" placeholder="Customer Name" readonly>
+            <input type="number" id="transAmount" placeholder="Amount">
+            <div class="trans-buttons">
+                <button onclick="deposit()">Deposit</button>
+                <button onclick="withdraw()">Withdraw</button>
+            </div>
+        </div>
+        <div id="status"></div>
+
+        <div class="table-container">
+            <table id="transactionTable">
+                <tr><th>Date</th><th>Phone</th><th>Name</th><th>Type</th><th>Amount</th><th>Status</th></tr>
+            </table>
+        </div>
+        <button onclick="exportCSV()">Export Transactions (CSV)</button>
+    </div>
+
+    <!-- Reports Section -->
+    <div class="section">
+        <h2>Reports</h2>
+        <select id="reportType">
+            <option value="daily">Daily</option>
+            <option value="monthly">Monthly</option>
+            <option value="annual">Annual</option>
+        </select>
+        <button onclick="showReport()">Show Report</button>
+        <div id="report"></div>
+    </div>
+</div>
+
+<script>
+// Load or initialize data
+let customers = JSON.parse(localStorage.getItem("customers") || "[]");
+let transactions = JSON.parse(localStorage.getItem("transactions") || "[]");
+
+updateCustomerTable();
+updateTransactionTable();
+
+function saveData() {
+    localStorage.setItem("customers", JSON.stringify(customers));
+    localStorage.setItem("transactions", JSON.stringify(transactions));
+}
+
+function addCustomer() {
+    const name = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+    if(name && phone) {
+        if(customers.find(c => c.phone === phone)) { alert("Customer with this phone already exists!"); return; }
+        customers.push({name, phone});
+        updateCustomerTable();
+        saveData();
+        document.getElementById('custName').value = '';
+        document.getElementById('custPhone').value = '';
+        alert("Customer added!");
+    } else alert("Please fill all fields");
+}
+
+function updateCustomerTable() {
+    const table = document.getElementById('customerTable');
+    table.innerHTML = "<tr><th>Name</th><th>Phone</th></tr>";
+    customers.forEach(c => {
+        const row = table.insertRow();
+        row.insertCell(0).innerText = c.name;
+        row.insertCell(1).innerText = c.phone;
+    });
+}
+
+function autoFillCustomer() {
+    const phone = document.getElementById('transPhone').value.trim();
+    const customer = customers.find(c => c.phone === phone);
+    document.getElementById('transName').value = customer ? customer.name : '';
+}
+
+function deposit() { handleTransaction("Deposit"); }
+function withdraw() { handleTransaction("Withdraw"); }
+
+function handleTransaction(type) {
+    const phone = document.getElementById('transPhone').value.trim();
+    const amount = parseFloat(document.getElementById('transAmount').value);
+    const customer = customers.find(c => c.phone === phone);
+    const statusDiv = document.getElementById('status');
+
+    if(customer && amount > 0) {
+        const today = new Date();
+        transactions.push({date: today, phone, name: customer.name, type, amount, status: "Successful"});
+        updateTransactionTable();
+        saveData();
+        statusDiv.innerText = `${type} Successful ✅`;
+        statusDiv.style.color = "green";
+        clearTransactionFields();
+    } else {
+        statusDiv.innerText = `${type} Failed ❌ (Invalid phone or amount)`;
+        statusDiv.style.color = "red";
+    }
+}
+
+function clearTransactionFields() {
+    document.getElementById('transPhone').value = '';
+    document.getElementById('transName').value = '';
+    document.getElementById('transAmount').value = '';
+}
+
+function updateTransactionTable() {
+    const table = document.getElementById('transactionTable');
+    table.innerHTML = "<tr><th>Date</th><th>Phone</th><th>Name</th><th>Type</th><th>Amount</th><th>Status</th></tr>";
+    transactions.forEach(t => {
+        const row = table.insertRow();
+        row.insertCell(0).innerText = new Date(t.date).toLocaleString();
+        row.insertCell(1).innerText = t.phone;
+        row.insertCell(2).innerText = t.name;
+        row.insertCell(3).innerText = t.type;
+        row.insertCell(4).innerText = t.amount.toFixed(2);
+        row.insertCell(5).innerText = t.status;
+    });
+}
+
+function showReport() {
+    const type = document.getElementById('reportType').value;
+    const today = new Date();
+    let filtered = transactions.filter(t => {
+        const tDate = new Date(t.date);
+        if(type === 'daily') return tDate.toDateString() === today.toDateString();
+        if(type === 'monthly') return tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear();
+        if(type === 'annual') return tDate.getFullYear() === today.getFullYear();
+    });
+    let totalDeposits = 0, totalWithdrawals = 0;
+    filtered.forEach(t => {
+        if(t.type==="Deposit") totalDeposits+=t.amount;
+        if(t.type==="Withdraw") totalWithdrawals+=t.amount;
+    });
+    document.getElementById('report').innerHTML =
+        `<p><strong>Report Type:</strong> ${type.charAt(0).toUpperCase()+type.slice(1)}</p>
+         <p>Total Deposits: ${totalDeposits.toFixed(2)}</p>
+         <p>Total Withdrawals: ${totalWithdrawals.toFixed(2)}</p>
+         <p>Number of Transactions: ${filtered.length}</p>`;
+}
+
+// Export CSV
+function exportCSV() {
+    if(transactions.length === 0) { alert("No transactions to export!"); return; }
+    let csvContent = "data:text/csv;charset=utf-8,Date,Phone,Name,Type,Amount,Status\n";
+    transactions.forEach(t => {
+        const row = [new Date(t.date).toLocaleString(), t.phone, t.name, t.type, t.amount.toFixed(2), t.status].join(",");
+        csvContent += row + "\n";
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "momo_transactions.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+</body>
+  </html>
